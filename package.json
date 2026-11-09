@@ -22,7 +22,6 @@
     "cordis.patch.yml",
     "docs/EDITING.md",
     "README.md",
-    "README.ru.md",
     "LICENSE"
   ],
   "engines": {

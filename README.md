@@ -1,306 +1,308 @@
 # PRESC for DSH
 
-**Persistent project memory for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).**
+**Постоянная память проекта для [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).**
 
-PRESC gives an agent a memory that outlives the conversation: the rules you work
-by, the projects you have built, the decisions already made, and the lessons that
-cost you something to learn. It is assembled into the system prompt of every
-session, so the agent starts already knowing instead of asking again.
+PRESC даёт агенту память, которая живёт дольше одного разговора: правила, по
+которым вы работаете, проекты, которые вы построили, принятые решения и уроки,
+которые дорого дались. Всё это собирается в системный промпт каждой сессии —
+агент начинает работу уже зная, а не переспрашивая.
 
-Install it and it works. The package ships a complete memory bundle, copies it
-into place on first activation, and from then on reads your own copy — which you
-can edit freely and which no upgrade will overwrite.
+Поставил — и работает. Пакет везёт с собой готовый бандл памяти, при первой
+активации копирует его на место, и дальше читает твою копию. Её можно свободно
+править, и никакое обновление плагина её не перезапишет.
 
 ---
 
-## The problem
+## Проблема
 
-An agent runtime starts each conversation blank. Everything the two of you
-established — the architecture you settled on, the approach you rejected and why,
-the boundary you agreed not to cross, the bug that took a night to find — is
-gone. So it gets re-explained, and re-explained slightly differently each time.
-That is drift, and drift is expensive.
+Рантайм агента начинает каждый разговор с пустого места. Всё, что вы вместе
+установили — выбранная архитектура, отвергнутый подход и причина отказа,
+граница, за которую договорились не заходить, баг, на который ушла ночь — всё
+это исчезло. Значит, это объясняют заново, и каждый раз немного иначе. Это и
+есть дрейф, и он дорого стоит.
 
-The usual fixes are unsatisfying:
+Обычные решения неудовлетворительны:
 
-- **Paste the context every session.** Manual, and it decays as the project moves.
-- **Write one long `AGENTS.md`.** Works until it does not: no structure, no
-  validation, no way to know whether what the agent read is current.
-- **Rely on the model's own memory.** Opaque, inconsistent across runtimes, and
-  it cannot tell a settled decision from a stale one.
+- **Вставлять контекст вручную каждую сессию.** Ручная работа, и она устаревает
+  по мере движения проекта.
+- **Написать один длинный `AGENTS.md`.** Работает до поры: нет структуры, нет
+  валидации, и нельзя понять, актуально ли то, что прочитал агент.
+- **Полагаться на память самой модели.** Непрозрачно, по-разному в разных
+  рантаймах, и она не отличает устоявшееся решение от устаревшего.
 
-PRESC takes a different position: treat project memory as **versioned, validated
-source material**, and deliver it through the harness's own prompt pipeline.
+PRESC занимает другую позицию: относиться к памяти проекта как к
+**версионируемому и валидируемому исходнику** и доставлять её через штатный
+конвейер промпта.
 
-## The idea
+## Суть
 
-Three things make this work, and they are worth stating plainly because they are
-the whole design.
+Здесь три вещи, и их стоит назвать прямо, потому что это весь замысел.
 
-**1. Memory is a context layer, not a tool.**
+**1. Память — это слой контекста, а не инструмент.**
 
-The agent does not call PRESC to remember. The memory is already in the system
-prompt before the first token of the user's message is read. Tools exist only to
-inspect and maintain that memory — they are the maintenance hatch, not the
-engine.
+Агент не «вызывает» PRESC, чтобы вспомнить. Память уже в системном промпте до
+того, как прочитан первый токен сообщения пользователя. Инструменты нужны
+только чтобы осмотреть и обслужить эту память — это люк для обслуживания, а не
+двигатель.
 
-The distinction matters. A tool is something the agent must decide to use, and a
-model that does not know it has forgotten something will not think to look it up.
-A context layer removes that failure mode entirely.
+Различие принципиально. Инструмент — то, что агент должен решить применить; а
+модель, которая не знает, что что-то забыла, не догадается посмотреть. Слой
+контекста убирает эту ошибку целиком.
 
-**2. Source and summary are separate.**
+**2. Источник и сводка разделены.**
 
-The canonical sources are written by a person and say what is true. The project
-dossiers are a validated summary derived from them, one per project, with a
-recorded content digest. When the sources change, the dossiers become detectably
-stale instead of silently wrong.
+Канонические источники пишет человек, и они говорят, что есть на самом деле.
+Досье проектов — валидированная сводка, выведенная из них: по одному на
+проект, с записанным дайджестом содержимого. Когда источники меняются, досье
+становятся **обнаружимо** устаревшими, а не молча неверными.
 
-**3. Memory is validated, not trusted.**
+**3. Память валидируется, а не принимается на веру.**
 
-A dossier is accepted only if it has the required structure, cites its sources,
-matches the project list in the lore, and is written in the expected language.
-A broken memory is rejected with an exact reason rather than quietly degrading
-the agent.
+Досье принимается только если у него правильная структура, оно ссылается на
+источники, совпадает со списком проектов в лоре и написано на ожидаемом языке.
+Сломанная память отвергается с точной причиной, а не тихо ухудшает работу
+агента.
 
-## How it works
+## Как это работает
 
 ```
-  your memory (Markdown)                  DeepSeek Harness
+  память на диске (Markdown)              DeepSeek Harness
   ┌──────────────────────────┐
   │ prompt.md                │
-  │ security-posture.md      │──read──┐
-  │ lore.md                  │        │
-  │ user.md                  │        ▼
+  │ security-posture.md      │──читает─┐
+  │ lore.md                  │         │
+  │ user.md                  │         ▼
   │ context/research-index.md│   ┌──────────────────────────┐
-  │ research/NN-topic.md     │   │ systemPrompt.section()   │→ every request
-  │ artifacts/INDEX.md       │   │ skills.register()        │→ skill catalog
-  │ artifacts/projects/*.md  │   │ tools.register()         │→ presc_* tools
+  │ research/NN-topic.md     │   │ systemPrompt.section()   │→ каждый запрос
+  │ artifacts/INDEX.md       │   │ skills.register()        │→ каталог скиллов
+  │ artifacts/projects/*.md  │   │ tools.register()         │→ инструменты presc_*
   └──────────────────────────┘   │ commands.register()      │→ /presc
                                  └──────────────────────────┘
                                               │
                     ┌─────────────────────────┴──────────────────┐
-                    │ first run: memory/ is copied into place    │
-                    │ later runs: your copy is read, never reset │
+                    │ первый запуск: memory/ копируется на место │
+                    │ далее: читается твоя копия, не сбрасывается│
                     └────────────────────────────────────────────┘
 ```
 
-Four delivery surfaces, each chosen for a reason:
+Четыре канала доставки, у каждого своя причина:
 
-| Surface | Why |
+| Канал | Зачем |
 |---|---|
-| `ctx.systemPrompt.section()` | The lore is present on every assembled request and survives compaction, because a prompt section is not conversation history. |
-| `ctx.skills.register()` | A `load-context` skill that embeds the lore itself — for subagents, and for sessions where the section is missing. |
-| `ctx.tools.register()` | `presc_status`, `presc_context`, `presc_reload`, `presc_finalize` for inspection and maintenance. |
-| `ctx.commands.register()` | `/presc` for the person at the keyboard. |
+| `ctx.systemPrompt.section()` | Лор присутствует в каждом запросе и переживает компакцию, потому что секция промпта — это не история диалога. |
+| `ctx.skills.register()` | Скилл `load-context`, содержащий лор внутри — для субагентов и для сессий, где секция отсутствует. |
+| `ctx.tools.register()` | `presc_status`, `presc_context`, `presc_reload`, `presc_finalize` для осмотра и обслуживания. |
+| `ctx.commands.register()` | `/presc` для человека за клавиатурой. |
 
-Dossier validation and finalization are delegated to
-`vendor/artifact-generator.py`, vendored unmodified from the
-[choirboy-prompt](https://github.com/howdeploy/choirboy-prompt) project. The
-protocol — request manifest, readiness gate, freshness digests — is kept
-byte-compatible, so an existing bundle works unchanged.
+Валидация и финализация досье отданы
+`vendor/artifact-generator.py` — он взят из проекта
+[choirboy-prompt](https://github.com/howdeploy/choirboy-prompt) без изменений.
+Протокол (манифест запроса, гейт готовности, дайджесты актуальности) сохранён
+байт-совместимым, поэтому существующий бандл работает как есть.
 
-## Install
+## Установка
 
-PRESC is an ordinary DSH bundle: `package.json` declares `dsh.bundle.patch`, and
-that patch inserts one plugin row.
+PRESC — обычный бандл DSH: в `package.json` объявлен `dsh.bundle.patch`, а патч
+вставляет одну строку плагина. Ставится из списка плагинов, без ручного
+копирования файлов.
 
-### From the Web UI
+### Через веб-интерфейс
 
-1. Open **Plugins** in the sidebar.
-2. Click **Add plugin**.
-3. Choose **Install a third-party plugin**.
-4. In **Plugin package name**, paste one of:
+1. Открой раздел **Плагины** (Plugins) в левом меню.
+2. Нажми **Добавить плагин** (Add plugin).
+3. Выбери **Установить сторонний плагин** (Install a third-party plugin).
+4. В поле **Имя пакета плагина** (Plugin package name) вставь одно из:
 
    ```
    github:d3d-root/PRESC-for-DSH
    ```
 
-   or the full repository URL:
+   или полную ссылку на репозиторий:
 
    ```
    git+https://github.com/d3d-root/PRESC-for-DSH.git
    ```
 
-   The field accepts an npm package name, `github:owner/repo`, `git+https://…`,
-   or a path to a local plugin folder.
-5. Click **Install plugin**.
+   Поле принимает имя пакета из npm, `github:владелец/репозиторий`,
+   `git+https://…` и путь к локальной папке с плагином.
+5. Нажми **Установить плагин** (Install plugin).
 
-It appears under **Installed plugins** as **PRESC for DSH** — the display name
-comes from `locale/*.json`, not from the package name `dsh-plugin-presc`.
+Плагин появится в разделе **Установленные плагины** (Installed plugins) под
+названием **PRESC for DSH** — это имя берётся из `locale/ru.json`, а не из
+имени пакета `dsh-plugin-presc`.
 
-Installation downloads the package, enables the bundle, and applies the patch. If
-HMR is enabled in the profile the plugin starts immediately; otherwise restart
-DSH.
+Установка скачивает пакет, включает бандл и применяет патч. Если HMR в профиле
+включён, плагин заработает сразу; иначе перезапусти DSH.
 
-### From a profile (when the UI is unavailable)
+### Через профиль (если интерфейс недоступен)
 
 ```powershell
 cd "$env:USERPROFILE\.dsh\profiles\desktop"
 pnpm add "github:d3d-root/PRESC-for-DSH"
 ```
 
-Add the bundle to that profile's `package.json`:
+Добавь бандл в `package.json` профиля:
 
 ```json
 "dsh": { "profile": { "bundles": ["...", "dsh-plugin-presc"] } }
 ```
 
-Restart DSH, or let HMR apply the patch.
+Перезапусти DSH или дай HMR применить патч.
 
-### Verify
+### Проверка
 
-In a new session:
+В новой сессии:
 
 ```
 /presc status
 ```
 
-It reports the memory root, which canonical sources loaded, the content digest,
-the delivery mode, and the dossier generator state.
+Показывает корень памяти, какие канонические источники загружены, дайджест,
+режим доставки и состояние генератора досье.
 
-## Use
+## Использование
 
-Nothing is required. Every new session starts with the memory loaded.
+Ничего делать не нужно. Каждая новая сессия начинается с загруженной памяти.
 
-| Action | How |
+| Действие | Как |
 |---|---|
-| Inspect state | `/presc status` or `presc_status` |
-| Reload after editing | `/presc reload` or `presc_reload` |
-| Show the full memory | `/presc context` or `presc_context` |
-| Finalize dossiers | `presc_finalize`, after writing them |
+| Посмотреть состояние | `/presc status` или `presc_status` |
+| Перечитать после правки | `/presc reload` или `presc_reload` |
+| Показать всю память | `/presc context` или `presc_context` |
+| Зафиксировать досье | `presc_finalize`, после того как они написаны |
 
-## Your memory
+## Твоя память
 
-The memory root defaults to `$DSH_HOME/presc` (`~/.dsh/presc`).
+Корень памяти по умолчанию — `$DSH_HOME/presc` (`~/.dsh/presc`).
 
-| File | What to write |
+| Файл | Что писать |
 |---|---|
-| `prompt.md` | working rules: priorities, style, boundaries |
-| `security-posture.md` | security frame and disclosure rules |
-| `user.md` | durable collaboration preferences only |
-| `lore.md` | real projects: what was decided, what exists, what failed |
-| `context/research-index.md` | one line per document in `research/` |
-| `research/NN-topic.md` | one decision per file: question, evidence, options, decision, risks, revisit trigger |
-| `artifacts/INDEX.md` | index of project dossiers |
-| `artifacts/projects/*.md` | one validated dossier per project |
+| `prompt.md` | правила работы: приоритеты, стиль, границы |
+| `security-posture.md` | рамки безопасности и правила раскрытия |
+| `user.md` | только устойчивые предпочтения в совместной работе |
+| `lore.md` | реальные проекты: что решено, что есть, что не получилось |
+| `context/research-index.md` | по строке на каждый документ в `research/` |
+| `research/NN-topic.md` | одно решение на файл: вопрос, доказательства, варианты, решение, риски, когда пересматривать |
+| `artifacts/INDEX.md` | оглавление досье проектов |
+| `artifacts/projects/*.md` | по одному валидированному досье на проект |
 
-Edit them in any editor. The plugin watches the folder and reloads, or call
-`/presc reload`.
+Правь любым редактором. Плагин следит за папкой и перечитывает сам, либо
+вызови `/presc reload`.
 
-### Keeping dossiers valid
+### Как держать досье валидными
 
-Each `###` heading in `lore.md` is a project, and each needs one dossier in
-`artifacts/projects/` whose first line is `# ` plus that exact heading. Dossiers
-must contain nine sections — `Canon`, `Goal and Outcome`, `Architecture and
-Components`, `Decisions and Constraints`, `Operating Workflow`, `Lessons and
-Rules`, `Sources`, `Unknowns`, `When to Revisit` — and cite their sources.
+Каждый заголовок `###` в `lore.md` — это проект, и на него нужно одно досье в
+`artifacts/projects/`, первая строка которого — `# ` плюс точный текст
+заголовка. В досье обязаны быть девять разделов — `Canon`, `Goal and Outcome`,
+`Architecture and Components`, `Decisions and Constraints`,
+`Operating Workflow`, `Lessons and Rules`, `Sources`, `Unknowns`,
+`When to Revisit` — и ссылки на источники.
 
-If you change `lore.md`, the dossiers become stale: rewrite them and run
-`presc_finalize`. Until then the status is `pending` and only the dossier block
-is withheld — the lore itself keeps delivering.
+Если изменил `lore.md`, досье устарели: перепиши их и выполни `presc_finalize`.
+До этого статус будет `pending`, и удерживается только блок досье — сам лор
+продолжает доставляться.
 
-`docs/EDITING.md` is the complete editing contract, written so you can hand the
-folder to another agent.
+`docs/EDITING.md` — полный контракт редактирования, написанный так, чтобы папку
+можно было отдать другому агенту.
 
-### Hand the memory to another agent
+### Отдать память другому агенту
 
 ```powershell
 node export-memory.mjs ./presc-editable
 ```
 
-Edit the exported folder, then:
+Отредактируй папку, затем:
 
 ```powershell
 node apply-memory.mjs ./presc-editable
 ```
 
-`apply-memory.mjs` validates on a staging copy first. A broken bundle is
-reported with exact file names and **the installed memory is not touched**. A
-valid bundle is backed up and installed.
+`apply-memory.mjs` сначала проверяет бандл на временной копии. Битый бандл
+показывается с точными именами файлов, и **установленная память не меняется**.
+Валидный бандл бэкапится и ставится.
 
-### Per-project override
+### Переопределение на проект
 
-Put a `.presc` folder in a repository root, or any parent of the working
-directory. Files in it override the global ones one by one, so a single project
-can replace only `lore.md` and keep the shared rules.
+Положи папку `.presc` в корень репозитория или любой родительский каталог
+рабочей папки. Файлы в ней перекрывают глобальные по одному, поэтому один
+проект может заменить только `lore.md` и сохранить общие правила.
 
-## Configuration
+## Настройка
 
-Every field is optional; defaults live in `lib/index.js`. Edit the `presc` row in
-your profile's `cordis.patch.yml`.
+Все поля необязательны; значения по умолчанию — в `lib/index.js`. Правь строку
+`presc` в `cordis.patch.yml` своего профиля.
 
-| Field | Default | Meaning |
+| Поле | По умолчанию | Смысл |
 |---|---|---|
-| `memoryDir` | `$DSH_HOME/presc` | global memory root |
-| `artifactsDir` | `<memoryDir>/artifacts` | dossiers and manifest |
-| `seed` | `true` | copy the shipped bundle into an empty root |
-| `projectOverride` | `true` | look for `.presc` in the working directory |
-| `delivery` | `section` | `section` inlines the lore; `status` inlines a pointer |
-| `order` | `700` | prompt section order |
-| `maxLoreBytes` | `131072` | lore size cap |
-| `artifacts` | `true` | include project dossiers |
+| `memoryDir` | `$DSH_HOME/presc` | корень глобальной памяти |
+| `artifactsDir` | `<memoryDir>/artifacts` | досье и манифест |
+| `seed` | `true` | копировать бандл в пустой корень |
+| `projectOverride` | `true` | искать `.presc` в рабочем каталоге |
+| `delivery` | `section` | `section` — лор в промпте; `status` — только указатель |
+| `order` | `700` | порядок секции в промпте |
+| `maxLoreBytes` | `131072` | предохранитель на размер лора |
+| `artifacts` | `true` | подключать досье проектов |
 | `artifactsMode` | `auto` | `auto` / `full` / `off` |
-| `maxArtifactsBytes` | `24576` | threshold for `auto` |
-| `pythonPath` | auto-detect | interpreter for the dossier generator |
-| `watch` | `true` | re-read files on change |
-| `debug` | `false` | verbose log |
+| `maxArtifactsBytes` | `24576` | порог для `auto` |
+| `pythonPath` | автопоиск | интерпретатор для генератора досье |
+| `watch` | `true` | перечитывать файлы при изменении |
+| `debug` | `false` | подробный журнал |
 
-### Token cost
+### Цена в токенах
 
-This is the one real trade-off, so it is worth being concrete.
+Это единственный реальный компромисс, и о нём стоит сказать конкретно.
 
-`delivery: section` pays the lore on every request. `artifactsMode: auto` keeps
-the dossier block out of the prompt when it exceeds `maxArtifactsBytes` and
-offers a pointer instead. For a large memory, use `delivery: status` with
-`artifactsMode: auto`: only a short pointer is inlined, and the model reads the
-memory on demand with `presc_context`.
+`delivery: section` платит за лор на каждом запросе. `artifactsMode: auto`
+удерживает блок досье вне промпта, когда он больше `maxArtifactsBytes`, и
+вставляет указатель. Для большой памяти используй `delivery: status` вместе с
+`artifactsMode: auto`: в промпт идёт только короткий указатель, а модель читает
+память по требованию через `presc_context`.
 
-A typical bundle of ~30 KiB of lore plus ~85 KiB of dossiers costs roughly 36k
-tokens per request when fully inlined. Measure your own bundle with
-`/presc status`.
+Типичный бандл из ~30 КиБ лора и ~85 КиБ досье при полной вставке стоит около
+36k токенов на запрос. Свой бандл измерь через `/presc status`.
 
-## Requirements
+## Требования
 
 - DSH `>= 0.2.1-rc.2`, Node `>= 20`.
-- Python 3 for the dossier generator. The plugin uses the interpreter bundled
-  with DSH, then `PATH`; set `pythonPath` if neither is found. Without Python the
-  dossiers are skipped and the lore still works.
+- Python 3 для генератора досье. Плагин берёт интерпретатор из комплекта DSH,
+  затем из `PATH`; если ни там, ни там нет — укажи `pythonPath`. Без Python
+  досье пропускаются, лор продолжает работать.
 
-## How this differs from choirboy-prompt
+## Чем отличается от choirboy-prompt
 
-PRESC is an adaptation of [choirboy-prompt](https://github.com/howdeploy/choirboy-prompt)
-for DeepSeek Harness. The method is the same; the delivery mechanism is not.
+PRESC — адаптация [choirboy-prompt](https://github.com/howdeploy/choirboy-prompt)
+для DeepSeek Harness. Метод тот же, механизм доставки другой.
 
 | choirboy-prompt | PRESC |
 |---|---|
-| `SessionStart` hook (Claude Code, Codex, 13 runtimes) | ordered prompt section |
-| short status only in capped runtimes | full lore inlined, no cap |
-| `load-context` skill points at files | skill embeds the lore itself |
-| CLI scripts | `presc_*` tools and `/presc` |
-| `Stop` hook | not needed |
+| хук `SessionStart` (Claude Code, Codex, 13 рантаймов) | упорядоченная секция промпта |
+| короткий статус в рантаймах с лимитом | полный лор встроен, без лимита |
+| скилл `load-context` ссылается на файлы | скилл содержит лор внутри |
+| CLI-скрипты | инструменты `presc_*` и `/presc` |
+| хук `Stop` | не нужен |
 | `CLAUDE_PLUGIN_DATA` / `XDG_DATA_HOME` | `$DSH_HOME/presc` |
-| manual install per runtime | one bundle, installs from the plugin list |
+| ручная установка под каждый рантайм | один бандл, ставится из списка плагинов |
 
-The prompt-section approach is stronger than a hook for one reason: a section is
-not conversation history, so it survives compaction and does not inflate the
-session log. That is precisely why the original had to fall back to a short
-status in Claude Code and Codex — those hooks could not carry the full text.
+Подход через секцию промпта сильнее хука по одной причине: секция не является
+историей диалога, поэтому переживает компакцию и не раздувает лог сессии.
+Именно поэтому в оригинале пришлось откатываться к короткому статусу в Claude
+Code и Codex — их хуки не могли пронести полный текст.
 
-## Tests
+## Тесты
 
 ```powershell
 node test/package.test.mjs
 ```
 
-Covers seeding on a fresh root, upgrade safety (an edited file is never
-overwritten), registration of every surface, delivery in both modes, and the
-empty-root fallback.
+Покрывают засев на чистом корне, безопасность обновления (правленый файл не
+перезаписывается), регистрацию всех каналов, доставку в обоих режимах и
+поведение при пустом корне.
 
-CI runs the same suite on Linux and Windows across Node 20 and 22, and validates
-the bundled memory with the real generator.
+CI гоняет тот же набор на Linux и Windows, на Node 20 и 22, и валидирует
+упакованную память настоящим генератором.
 
-## License
+## Лицензия
 
-MIT. Vendored `vendor/artifact-generator.py` comes from the
-[choirboy-prompt](https://github.com/howdeploy/choirboy-prompt) project (MIT) and
-is included unmodified.
+MIT. Вендоренный `vendor/artifact-generator.py` — из проекта
+[choirboy-prompt](https://github.com/howdeploy/choirboy-prompt) (MIT), включён
+без изменений.
