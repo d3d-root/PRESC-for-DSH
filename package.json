@@ -1,0 +1,61 @@
+{
+  "name": "dsh-plugin-presc",
+  "version": "1.1.0",
+  "description": "PRESC for DSH — persistent project memory for DeepSeek Harness: canonical lore, research index, and validated project dossiers delivered into every session.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/lore.js",
+    "lib/artifacts.js",
+    "lib/seed.js",
+    "vendor/artifact-generator.py",
+    "memory",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "docs/EDITING.md",
+    "README.md",
+    "README.ru.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.2",
+    "node": ">=20"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "dsh-bundle",
+    "deepseek-harness",
+    "agent-memory",
+    "persistent-context",
+    "project-memory",
+    "lore",
+    "presc"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "d3d-root"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/d3d-root/PRESC-for-DSH.git"
+  },
+  "bugs": {
+    "url": "https://github.com/d3d-root/PRESC-for-DSH/issues"
+  },
+  "homepage": "https://github.com/d3d-root/PRESC-for-DSH#readme",
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

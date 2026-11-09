@@ -1,0 +1,56 @@
+- insert:
+    - id: presc
+      name: dsh-plugin-presc
+      config:
+        # Where the global memory lives. Defaults to $DSH_HOME/presc
+        # (~/.dsh/presc on Windows). It holds prompt.md, security-posture.md,
+        # lore.md, user.md and context/research-index.md.
+        # memoryDir: C:/Users/me/.dsh/presc
+
+        # Where project dossiers and their manifest live. Defaults to
+        # <memoryDir>/artifacts.
+        # artifactsDir: C:/Users/me/.dsh/presc/artifacts
+
+        # Copy the shipped memory bundle into an empty memory root on first
+        # activation. Set false to start from an empty root instead.
+        seed: true
+
+        # Look for a per-project memory override in a `.presc` folder in the
+        # session working directory or any parent. Project files override the
+        # global ones one by one.
+        projectOverride: true
+
+        # section — the lore is inlined into the system prompt on every step
+        #           (recommended: survives compaction);
+        # status  — only a pointer is inlined and the model reads the lore
+        #           with the presc_context tool (saves tokens).
+        delivery: section
+
+        # Order of the prompt section. 700 sits after team policy and before
+        # the tool guidance.
+        order: 700
+
+        # Safety cap on the canonical lore size.
+        maxLoreBytes: 131072
+
+        # Include project dossiers (the second half of the memory).
+        artifacts: true
+
+        # auto — dossiers are inlined when they fit in maxArtifactsBytes,
+        #        otherwise a pointer is inlined and the model reads them with
+        #        the presc_context tool;
+        # full — always inline;
+        # off  — never inline.
+        artifactsMode: auto
+        maxArtifactsBytes: 24576
+
+        # Absolute path to Python when auto-discovery fails. By default the
+        # plugin uses the interpreter bundled with DSH
+        # (resources/runtime/primary-runtime/dependencies/python).
+        # pythonPath: C:/Python312/python.exe
+
+        # Re-read files when they change on disk.
+        watch: true
+
+        # Verbose plugin log.
+        debug: false

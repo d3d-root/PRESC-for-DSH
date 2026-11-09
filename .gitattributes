@@ -1,0 +1,16 @@
+# Normalize text to LF in the repository so the canonical memory digest is
+# identical on every platform. lib/lore.js normalizes CRLF on read as well, so
+# a checkout with CRLF still produces the same digest.
+* text=auto eol=lf
+
+*.md text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.svg text eol=lf
+*.py text eol=lf
+
+# Vendored generator is byte-compared against upstream; never rewrite it.
+vendor/artifact-generator.py -text

@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [20, 22]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Package manifest is valid
+        run: node -e "const p=require('./package.json'); if(!p.dsh?.bundle?.patch) throw new Error('missing dsh.bundle.patch'); console.log('manifest ok', p.name, p.version)"
+
+      - name: Syntax check
+        run: |
+          node --check lib/index.js
+          node --check lib/lore.js
+          node --check lib/artifacts.js
+          node --check lib/seed.js
+          node --check apply-memory.mjs
+          node --check export-memory.mjs
+
+      - name: Plugin behaviour tests
+        run: node test/package.test.mjs
+
+      - name: Bundled memory validates
+        shell: bash
+        run: |
+          tmp="$(mktemp -d)"
+          cp -r memory/. "$tmp"
+          python vendor/artifact-generator.py prepare --source-root "$tmp" --root "$tmp/artifacts"
+          python vendor/artifact-generator.py finalize --source-root "$tmp" --root "$tmp/artifacts" --json
+          python vendor/artifact-generator.py status --source-root "$tmp" --root "$tmp/artifacts" --json | grep -q '"status": "ready"'
