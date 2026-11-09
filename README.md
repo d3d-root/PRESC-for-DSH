@@ -106,14 +106,37 @@ that patch inserts one plugin row.
 
 ### From the Web UI
 
-Open **Plugins**, choose **Install bundle**, and give the package name or a path
-to this folder. It appears in the plugin list as **PRESC for DSH**.
+1. Open **Plugins** in the sidebar.
+2. Click **Add plugin**.
+3. Choose **Install a third-party plugin**.
+4. In **Plugin package name**, paste one of:
 
-### From a profile
+   ```
+   github:d3d-root/PRESC-for-DSH
+   ```
+
+   or the full repository URL:
+
+   ```
+   git+https://github.com/d3d-root/PRESC-for-DSH.git
+   ```
+
+   The field accepts an npm package name, `github:owner/repo`, `git+https://…`,
+   or a path to a local plugin folder.
+5. Click **Install plugin**.
+
+It appears under **Installed plugins** as **PRESC for DSH** — the display name
+comes from `locale/*.json`, not from the package name `dsh-plugin-presc`.
+
+Installation downloads the package, enables the bundle, and applies the patch. If
+HMR is enabled in the profile the plugin starts immediately; otherwise restart
+DSH.
+
+### From a profile (when the UI is unavailable)
 
 ```powershell
 cd "$env:USERPROFILE\.dsh\profiles\desktop"
-pnpm add "file:C:/path/to/dsh-plugin-presc"
+pnpm add "github:d3d-root/PRESC-for-DSH"
 ```
 
 Add the bundle to that profile's `package.json`:

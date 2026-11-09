@@ -1,0 +1,73 @@
+{
+  "completed_at": "2026-11-09T19:37:08.791530+00:00",
+  "index_sha256": "ee9643bcb24e72f19bf1fd9c4c805163f4609c6a6b16f9d343d848d117917b16",
+  "projects": {
+    "01-adult-content-and-generation": {
+      "artifact_sha256": "aa7ea163d681e12cd606791f2bc06f795195a94b97b436e8b2aac71f8d726584",
+      "path": "projects/01-adult-content-and-generation.md",
+      "source_sha256": "338f771d647f5dcc52cebd96b74aefb737b48e8a1b4f1e211a06373605946415"
+    },
+    "02-x-growth-automation": {
+      "artifact_sha256": "789a1455ef9151923bb1c56af3ec376f2885b1f3ae25c6624088dbeee7f6f1d6",
+      "path": "projects/02-x-growth-automation.md",
+      "source_sha256": "481dcf2bd377a0c86246fde0f663305e9f13f72326e4fd0ebd64f6cba7a60cb6"
+    },
+    "03-account-and-agent-orchestration": {
+      "artifact_sha256": "3140fd7ea5ab21982eb420f9d7973c6a7a2b3c168a02f8e42a133b1ff83b8610",
+      "path": "projects/03-account-and-agent-orchestration.md",
+      "source_sha256": "6caef6a92a45b59c4541951866b42ec199b2190a763aa2ba50cee6969190426e"
+    },
+    "04-total-website-parsing": {
+      "artifact_sha256": "73c308d2be9c9f80c05ea6695870dc4aeb1fb45bc5548ae392d81ea253b9f03c",
+      "path": "projects/04-total-website-parsing.md",
+      "source_sha256": "2e27e1f968804b7b21b5cac8396863688187e09a1e4e761e655c918540e3b97b"
+    },
+    "05-sales-and-payment-automation": {
+      "artifact_sha256": "2ac2dd9d16cf8c8571a231f42de967b597d9760b8db612f40d07a64e33170a79",
+      "path": "projects/05-sales-and-payment-automation.md",
+      "source_sha256": "995a9887a549e934e0b3458515f04ae4c1a7d91439316a13e8a2700688c4fbff"
+    },
+    "06-security-work-shared-frame": {
+      "artifact_sha256": "0cdafa99161e0d3cdd2bce795b9b62c3322be8c9dfef68cef9846ea4ef3677f4",
+      "path": "projects/06-security-work-shared-frame.md",
+      "source_sha256": "5f717af15ba3911a768c3e1602208726fbf7f1d05da13214e8241e971135c004"
+    },
+    "07-reverse-engineering-and-security-router": {
+      "artifact_sha256": "e11ffde913be8fb44be2a3e47c1c1c455dc0721a2e9021aeb160edabfd8e8a12",
+      "path": "projects/07-reverse-engineering-and-security-router.md",
+      "source_sha256": "f292fd1b07f4a4e2516a0ba73ac5ad29288f87ea607ef1b5bb5baf61607c95a6"
+    },
+    "08-web3-security": {
+      "artifact_sha256": "9e26a0e0ed1809a1feb62c7d1710e59d837478bead928ef265d684faa31346df",
+      "path": "projects/08-web3-security.md",
+      "source_sha256": "db33330c6e117ca8bd8a2adf42b0256c93cc61c6022a72ab61e6ce4ffedd217e"
+    },
+    "09-third-party-contract-review-and-responsible-disclosure": {
+      "artifact_sha256": "59d3646698e822ed1eb87d34a5e38dbe0ae2214413b51c6b30f00e88f409b4e7",
+      "path": "projects/09-third-party-contract-review-and-responsible-disclosure.md",
+      "source_sha256": "c7109b0afceba315c5db2cf065cbdf2bedbea0d307f1fb16fd1542e76ee7495c"
+    },
+    "10-agent-memory-choirboy-prompt": {
+      "artifact_sha256": "5a826d809ac7e87c84545fe5fe16f3048dab933dc37b0ee62c7f6be23bcb0eee",
+      "path": "projects/10-agent-memory-choirboy-prompt.md",
+      "source_sha256": "257459d44f02e821295d042c7f4959c8812a350c146f883ed0f0ed592d34a65d"
+    },
+    "11-radio-reconnaissance-flipper-marauder": {
+      "artifact_sha256": "a0c6fdbeccdf0f17d9f0ee16ce1165637485981374879a4843b33e7d8abf254c",
+      "path": "projects/11-radio-reconnaissance-flipper-marauder.md",
+      "source_sha256": "17db0c74463098940ba62a03017142f1d2f7888a3f9ce59fdeb7107372eacf7f"
+    },
+    "12-game-internals-and-cheats": {
+      "artifact_sha256": "5a3f6f54e37006658cea49b1c67d71e008bc469f4405e3ddf28215e3b721e8cb",
+      "path": "projects/12-game-internals-and-cheats.md",
+      "source_sha256": "fdafe55ab9b8c7a3de217c8cb682dab1f3ed73d4d4d3e5c8f87d9f40da4612f4"
+    },
+    "13-adversarial-self-audit": {
+      "artifact_sha256": "de984dd4c62f9056174080419c647e2b49ee31de78270149ed5946f451fee2e8",
+      "path": "projects/13-adversarial-self-audit.md",
+      "source_sha256": "844656067dcb7dcb853fe625fb5d71fb6bf1b19668c23ebf7ea1419495c5a5b2"
+    }
+  },
+  "schema_version": 1,
+  "source_sha256": "8947321c84036550ad8ccdeb8fe275a914a9ea15a38d3d750c9b7e81faea6d29"
+}
